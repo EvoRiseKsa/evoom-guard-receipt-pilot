@@ -29,6 +29,30 @@ EVOGUARD_RELEASE_SOURCE_REVERIFY_WORKFLOW_BLOB_SHA
 Do not change this workflow after recording its blob SHA; a change requires a
 new review and pin.
 
+## P2: registered but disabled B producer-receipt workflow
+
+`.github/workflows/evoguard-produce-release-source-receipt.yml` defines B as
+the only `workflow_run` consumer of the named A workflow. It is disabled by the
+same absent activation variable. Before reading evidence it checks A's numeric
+workflow ID, the exact successful triggering run, the current `main` SHA, and
+the repository identity. It never checks out or executes the candidate.
+
+When it is eventually enabled, B may use `attestations: write` and
+`id-token: write` only to ask GitHub to attest the exact canonical receipt
+file. It still has no secret, Environment, `contents: write`, signing,
+release, publishing, or admission action.
+
+After P2 is merged, record B's numeric workflow ID and raw-Git blob SHA from
+`main` as these repository Actions variables:
+
+```text
+EVOGUARD_RELEASE_SOURCE_RECEIPT_WORKFLOW_ID
+EVOGUARD_RELEASE_SOURCE_RECEIPT_WORKFLOW_BLOB_SHA
+```
+
+Do not set `EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED` yet. P3 must add C and P4
+must be a source-only calculator change before the first live round.
+
 ## Hard prerequisites before activating A-to-B-to-C
 
 1. Use only the published immutable `v3.8.0` runtime, which contains the receipt

@@ -33,12 +33,19 @@ The bootstrap prerequisite is met by the immutable
 - SHA-256: `47bdcfbe2814fdd687afd62d1c476cbd5248db65683c97d2867a56dbbf9ee643`
 
 This baseline adds a small CLI fixture, a base-owned black-box policy, a
-judge-owned verifier pack, and a registered A workflow
-(`.github/workflows/evoguard-release-source-reverify.yml`).  A is **disabled
+judge-owned verifier pack, and registered A and B workflows
+(`.github/workflows/evoguard-release-source-reverify.yml` and
+`.github/workflows/evoguard-produce-release-source-receipt.yml`).  A is **disabled
 by default**: it has no inputs and runs only when the administrator-controlled
 Actions variable `EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED` is exactly `true`.
 That variable must remain unset until B and C are reviewed, merged, and their
 workflow identifiers and raw-Git blob SHAs have been recorded.
+
+B is triggered only by a completed A run, validates A's numeric workflow ID,
+re-derives the raw-Git controls without a candidate checkout, then can ask
+GitHub to attest the exact receipt bytes. It has the attestation permission
+only when the same activation variable is `true`; it is inactive now and does
+not by itself make an admission, release, deployment, or `ALLOW` decision.
 
 CI downloads the published runtime, verifies its SHA-256, and checks that the
 policy's pack digest matches that runtime's canonical `pack-doctor` result.
