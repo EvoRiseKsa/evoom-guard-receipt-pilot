@@ -1,0 +1,23 @@
+name: Pilot CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  pilot-ci:
+    name: pilot-ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+      - name: Compile the public fixture
+        run: python -m compileall -q calculator.py tests
+      - name: Exercise the public fixture
+        run: python -c "from calculator import add; assert add(19, 23) == 42"
