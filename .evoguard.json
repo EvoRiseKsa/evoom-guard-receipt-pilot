@@ -1,0 +1,17 @@
+{
+  "policy_id": "receipt-pilot-calculator",
+  "policy_version": "1",
+  "protected": [],
+  "allow": [],
+  "allow_new_tests": false,
+  "verifier_pack": "security/receipt-pack",
+  "expect_verifier_pack_sha256": "b4625484d06518d7ba2135d49c8ea5f5f2d0ce3d99889f4be4c45f2a0e9a03db",
+  "blackbox": true,
+  "blackbox_only": true,
+  "isolation": "docker",
+  "docker_image": "python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de",
+  "docker_network": "none",
+  "require_report_integrity": "external_process_isolated",
+  "require_candidate_isolation": "docker",
+  "timeout": 120
+}

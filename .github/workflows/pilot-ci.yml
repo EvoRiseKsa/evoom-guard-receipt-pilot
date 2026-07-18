@@ -12,6 +12,9 @@ jobs:
   pilot-ci:
     name: pilot-ci
     runs-on: ubuntu-latest
+    env:
+      EVOGUARD_BOOTSTRAP_RUNTIME_URL: https://github.com/EvoRiseKsa/EvoOM-Guard-m/releases/download/v3.8.0/evo-guard.pyz
+      EVOGUARD_BOOTSTRAP_RUNTIME_SHA256: 47bdcfbe2814fdd687afd62d1c476cbd5248db65683c97d2867a56dbbf9ee643
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
@@ -19,5 +22,36 @@ jobs:
           python-version: "3.12"
       - name: Compile the public fixture
         run: python -m compileall -q calculator.py tests
-      - name: Exercise the public fixture
-        run: python -c "from calculator import add; assert add(19, 23) == 42"
+      - name: Exercise the public CLI fixture
+        run: test "$(python -m calculator add 19 23)" = "42"
+      - name: Run the public fixture tests
+        run: python -m unittest discover -s tests -v
+      - name: Fetch the byte-pinned Guard bootstrap runtime
+        run: |
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/evo-guard.pyz" \
+            "$EVOGUARD_BOOTSTRAP_RUNTIME_URL"
+          printf '%s  %s\n' "$EVOGUARD_BOOTSTRAP_RUNTIME_SHA256" \
+            "$RUNNER_TEMP/evo-guard.pyz" | sha256sum --check --status
+      - name: Validate the judge-owned verifier pack and policy pin
+        run: |
+          python "$RUNNER_TEMP/evo-guard.pyz" pack-doctor \
+            security/receipt-pack --json > "$RUNNER_TEMP/receipt-pack.json"
+          python - "$RUNNER_TEMP/receipt-pack.json" .evoguard.json <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          report_path, policy_path = sys.argv[1:]
+          report = json.loads(Path(report_path).read_text(encoding="utf-8"))
+          policy = json.loads(Path(policy_path).read_text(encoding="utf-8"))
+          assert report["ok"] is True, report
+          assert report["pack_digest_format"] == "EVOGUARD_PACK_V2", report
+          assert policy["expect_verifier_pack_sha256"] == report["pack_sha256"]
+          pack_source = Path("security/receipt-pack/test_calculator_protocol.py").read_text(
+              encoding="utf-8"
+          )
+          assert "EVOGUARD_EXEC" in pack_source
+          assert "EVOGUARD_TARGET" not in pack_source
+          assert "from calculator" not in pack_source
+          assert "import calculator" not in pack_source
+          PY
