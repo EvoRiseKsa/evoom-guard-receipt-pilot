@@ -1,0 +1,6 @@
+{
+  "id": "receipt-pilot-calculator-cli",
+  "version": "1.0.0",
+  "description": "Judge-owned external protocol checks for the public calculator CLI.",
+  "target_type": "cli"
+}

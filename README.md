@@ -26,11 +26,18 @@ control flow and negative tests observable without exposing real data.
 
 ## Current status
 
-The repository is intentionally inert at baseline. It has no active receipt
-workflows yet. The merged receipt contract in
-[`EvoOM-Guard-m`](https://github.com/EvoRiseKsa/EvoOM-Guard-m) needs a new,
-byte-pinned Guard runtime before a live A-to-B-to-C experiment can run. The
-published `v3.7.0` zipapp predates the receipt CLI and must not be used here.
+The repository remains intentionally inert: it has no active receipt workflows
+yet. The bootstrap prerequisite is now met by the immutable
+[`v3.8.0` Guard release](https://github.com/EvoRiseKsa/EvoOM-Guard-m/releases/tag/v3.8.0):
+
+- URL: `https://github.com/EvoRiseKsa/EvoOM-Guard-m/releases/download/v3.8.0/evo-guard.pyz`
+- SHA-256: `47bdcfbe2814fdd687afd62d1c476cbd5248db65683c97d2867a56dbbf9ee643`
+
+This baseline adds a small CLI fixture, a base-owned black-box policy, and a
+judge-owned verifier pack. CI downloads the published runtime, verifies its
+SHA-256, and checks that the policy's pack digest matches that runtime's
+canonical `pack-doctor` result. It does **not** run A, B, or C, produce a
+receipt, publish software, or make an admission decision.
 
 See [PILOT_STATUS.md](PILOT_STATUS.md) for the staged plan and hard stop
 conditions.
