@@ -26,18 +26,24 @@ control flow and negative tests observable without exposing real data.
 
 ## Current status
 
-The repository remains intentionally inert: it has no active receipt workflows
-yet. The bootstrap prerequisite is now met by the immutable
+The bootstrap prerequisite is met by the immutable
 [`v3.8.0` Guard release](https://github.com/EvoRiseKsa/EvoOM-Guard-m/releases/tag/v3.8.0):
 
 - URL: `https://github.com/EvoRiseKsa/EvoOM-Guard-m/releases/download/v3.8.0/evo-guard.pyz`
 - SHA-256: `47bdcfbe2814fdd687afd62d1c476cbd5248db65683c97d2867a56dbbf9ee643`
 
-This baseline adds a small CLI fixture, a base-owned black-box policy, and a
-judge-owned verifier pack. CI downloads the published runtime, verifies its
-SHA-256, and checks that the policy's pack digest matches that runtime's
-canonical `pack-doctor` result. It does **not** run A, B, or C, produce a
-receipt, publish software, or make an admission decision.
+This baseline adds a small CLI fixture, a base-owned black-box policy, a
+judge-owned verifier pack, and a registered A workflow
+(`.github/workflows/evoguard-release-source-reverify.yml`).  A is **disabled
+by default**: it has no inputs and runs only when the administrator-controlled
+Actions variable `EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED` is exactly `true`.
+That variable must remain unset until B and C are reviewed, merged, and their
+workflow identifiers and raw-Git blob SHAs have been recorded.
+
+CI downloads the published runtime, verifies its SHA-256, and checks that the
+policy's pack digest matches that runtime's canonical `pack-doctor` result.
+It does **not** run A, B, or C, produce a receipt, publish software, or make
+an admission decision.
 
 See [PILOT_STATUS.md](PILOT_STATUS.md) for the staged plan and hard stop
 conditions.

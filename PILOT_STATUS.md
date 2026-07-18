@@ -1,10 +1,26 @@
 # Pilot status and execution boundary
 
-## P0 baseline: fixture and policy, intentionally inert
+## P0 baseline: fixture and policy
 
 This baseline establishes a public-safe executable fixture, a base-owned
-black-box policy, and a judge-owned protocol pack. It does not add workflow A,
-B, or C and does not create an artifact attestation.
+black-box policy, and a judge-owned protocol pack. It does not create an
+artifact attestation.
+
+## P1: registered but disabled A reverify workflow
+
+`.github/workflows/evoguard-release-source-reverify.yml` defines A with
+`workflow_dispatch` only, `permissions: {}`, data-only artifacts, and a
+raw-Git re-derivation check. It has no secrets, Environment, OIDC, write
+permission, attestation, signing, release, or admission operation.
+
+The metadata job requires the separate administrator-controlled Actions
+variable `EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED` to equal `true`. The variable
+must remain **unset** in P1, P2, and P3. Consequently, dispatching A now does
+not checkout or execute a candidate.
+
+After P1 is merged, record its numeric workflow ID and the raw-Git blob SHA
+from `main` as repository Actions variables. Do not change this workflow after
+recording its blob SHA; a change requires a new review and pin.
 
 ## Hard prerequisites before activating A-to-B-to-C
 
@@ -19,8 +35,8 @@ B, or C and does not create an artifact attestation.
    checks. The reviewer role is operational separation only; the two accounts
    belong to the same owner and are not independent security review.
 4. Add A, review and merge it, then record A's numeric workflow ID and raw-Git
-   blob SHA. Repeat for B. Only then add C and run a complete chain while
-   `main` remains unchanged.
+   blob SHA. Repeat for B. Only then add C, add a source-only P4 change, and
+   run a complete chain while `main` remains unchanged.
 
 ## Required live rounds
 
