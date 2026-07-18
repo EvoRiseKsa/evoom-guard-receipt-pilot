@@ -9,6 +9,8 @@ from collections.abc import Sequence
 def add(left: int, right: int) -> int:
     """Return the exact integer sum without external I/O or side effects."""
 
+    if type(left) is not int or type(right) is not int:
+        raise TypeError("add requires integer operands")
     return left + right
 
 
