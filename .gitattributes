@@ -1,0 +1,8 @@
+# Receipt controls compare exact Git-object bytes. Keep reviewed text stable on
+# every client, including Windows checkouts.
+*.md text eol=lf
+*.py text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+.github/workflows/** text eol=lf
