@@ -33,19 +33,28 @@ The bootstrap prerequisite is met by the immutable
 - SHA-256: `47bdcfbe2814fdd687afd62d1c476cbd5248db65683c97d2867a56dbbf9ee643`
 
 This baseline adds a small CLI fixture, a base-owned black-box policy, a
-judge-owned verifier pack, and registered A and B workflows
-(`.github/workflows/evoguard-release-source-reverify.yml` and
-`.github/workflows/evoguard-produce-release-source-receipt.yml`).  A is **disabled
+judge-owned verifier pack, and registered A, B, and C workflows
+(`.github/workflows/evoguard-release-source-reverify.yml`,
+`.github/workflows/evoguard-produce-release-source-receipt.yml`, and
+`.github/workflows/evoguard-reverify-release-source-receipt.yml`).  A is **disabled
 by default**: it has no inputs and runs only when the administrator-controlled
 Actions variable `EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED` is exactly `true`.
-That variable must remain unset until B and C are reviewed, merged, and their
-workflow identifiers and raw-Git blob SHAs have been recorded.
+That variable must remain unset until B and C are reviewed and merged, and the
+required A/B workflow identifiers and raw-Git blob SHA anchors have been
+recorded.
 
 B is triggered only by a completed A run, validates A's numeric workflow ID,
 re-derives the raw-Git controls without a candidate checkout, then can ask
 GitHub to attest the exact receipt bytes. It has the attestation permission
 only when the same activation variable is `true`; it is inactive now and does
 not by itself make an admission, release, deployment, or `ALLOW` decision.
+
+C is triggered only by a completed B run. It has read-only `actions`,
+`contents`, and attestation permissions, rechecks the current protected-main
+identity and both A/B raw-Git anchors, and invokes the published v3.8 runtime
+to make a **fresh** GitHub Artifact Attestation verification of B's exact
+receipt bytes. It preserves only data-only verification evidence. C does not
+make an admission, release, deployment, merge, or publication decision.
 
 CI downloads the published runtime, verifies its SHA-256, and checks that the
 policy's pack digest matches that runtime's canonical `pack-doctor` result.
