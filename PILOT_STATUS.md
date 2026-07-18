@@ -19,8 +19,15 @@ must remain **unset** in P1, P2, and P3. Consequently, dispatching A now does
 not checkout or execute a candidate.
 
 After P1 is merged, record its numeric workflow ID and the raw-Git blob SHA
-from `main` as repository Actions variables. Do not change this workflow after
-recording its blob SHA; a change requires a new review and pin.
+from `main` as these repository Actions variables:
+
+```text
+EVOGUARD_RELEASE_SOURCE_REVERIFY_WORKFLOW_ID
+EVOGUARD_RELEASE_SOURCE_REVERIFY_WORKFLOW_BLOB_SHA
+```
+
+Do not change this workflow after recording its blob SHA; a change requires a
+new review and pin.
 
 ## Hard prerequisites before activating A-to-B-to-C
 
