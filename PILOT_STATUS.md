@@ -50,8 +50,28 @@ EVOGUARD_RELEASE_SOURCE_RECEIPT_WORKFLOW_ID
 EVOGUARD_RELEASE_SOURCE_RECEIPT_WORKFLOW_BLOB_SHA
 ```
 
-Do not set `EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED` yet. P3 must add C and P4
-must be a source-only calculator change before the first live round.
+Do not set `EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED` yet. P4 must be a
+source-only calculator change before the first live round.
+
+## P3: registered but disabled C fresh receipt re-verification workflow
+
+`.github/workflows/evoguard-reverify-release-source-receipt.yml` defines C as
+the only `workflow_run` consumer of the named B workflow. It is disabled by
+the same absent activation variable. Before it downloads an artifact, C checks
+B's numeric workflow ID, the exact successful B run, the current `main` SHA,
+and repository identity. It never checks out or executes candidate source.
+
+When it is eventually enabled, C has only `actions: read`, `contents: read`,
+and `attestations: read`. It snapshots a fixed, bounded B artifact set, binds
+its contents to the A/B numeric IDs and raw-Git blob anchors, and uses the
+published v3.8 runtime to make a fresh constrained GitHub Artifact Attestation
+verification. Its data-only output is a non-admitting prerequisite, not an
+`ALLOW`, release, deployment, publication, or merge decision.
+
+C has no downstream trusted consumer in this pilot, so no C workflow variable
+is required. Do not set `EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED` yet: P4 must
+remain a source-only calculator change, followed by controlled positive and
+negative rounds while `main` stays unchanged.
 
 ## Hard prerequisites before activating A-to-B-to-C
 
@@ -66,8 +86,9 @@ must be a source-only calculator change before the first live round.
    checks. The reviewer role is operational separation only; the two accounts
    belong to the same owner and are not independent security review.
 4. Add A, review and merge it, then record A's numeric workflow ID and raw-Git
-   blob SHA. Repeat for B. Only then add C, add a source-only P4 change, and
-   run a complete chain while `main` remains unchanged.
+   blob SHA. Repeat for B. Add and review C; it has no downstream consumer so
+   no C anchor is required. Only then add a source-only P4 change and run a
+   complete chain while `main` remains unchanged.
 
 ## Required live rounds
 
