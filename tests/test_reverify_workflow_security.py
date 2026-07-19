@@ -51,9 +51,37 @@ class ReverifyWorkflowSecurityTests(unittest.TestCase):
             "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
             "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
             "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+            "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
             "vars.EVOGUARD_BOOTSTRAP_RUNTIME_URL",
             "vars.EVOGUARD_BOOTSTRAP_RUNTIME_SHA256",
             "sha256sum --check",
+        ):
+            self.assertIn(required, self.workflow)
+
+    def test_bootstraps_a_hash_locked_judge_before_any_checkout(self) -> None:
+        setup = "Set up the unprivileged judge Python runtime"
+        install = "Install hash-locked judge test dependencies"
+        checkout = "Checkout exact parent only"
+        guard = "Re-verify parent to protected main without credentials"
+        self.assertLess(self.workflow.index(setup), self.workflow.index(install))
+        self.assertLess(self.workflow.index(install), self.workflow.index(checkout))
+        self.assertLess(self.workflow.index(checkout), self.workflow.index(guard))
+        for required in (
+            'python-version: "3.12"',
+            "--only-binary=:all:",
+            "--require-hashes",
+            "pytest==9.0.3",
+            "colorama==0.4.6",
+            "iniconfig==2.3.0",
+            "packaging==26.2",
+            "pluggy==1.6.0",
+            "pygments==2.20.0",
+            "2c5efc453d45394fdd706ade797c0a81091eccd1d6e4bccfcd476e2b8e0ab5d9",
+            "4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6",
+            "f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12",
+            "5fc45236b9446107ff2415ce77c807cee2862cb6fac22b8a73826d0693b0980e",
+            "e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746",
+            "81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176",
         ):
             self.assertIn(required, self.workflow)
 
