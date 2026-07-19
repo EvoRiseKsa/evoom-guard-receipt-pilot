@@ -8,15 +8,6 @@ name: EvoGuard Receipt Pilot Reverify
 
 on:
   workflow_dispatch:
-    inputs:
-      test_postverify_hold:
-        description: >-
-          Test-only: pause for exactly five minutes after data-only evidence is
-          uploaded, so a separately approved moved-main rejection control can
-          advance protected main before stage B starts.
-        required: false
-        type: boolean
-        default: false
 
 permissions: {}
 
@@ -223,16 +214,3 @@ jobs:
           if-no-files-found: error
           overwrite: false
           retention-days: 1
-
-      # This is a bounded, opt-in negative-test hook only. It runs after the
-      # unprivileged workflow has completed its raw-Git re-derivation and
-      # stored its data-only evidence. It does not alter the candidate,
-      # execute new code, or add a permission, secret, environment, or write.
-      # The fixed window lets a separately reviewed harmless main-move commit
-      # demonstrate B's existing current-main mismatch rejection deterministically.
-      - name: Bounded post-verification hold for moved-main control
-        if: ${{ inputs.test_postverify_hold == true }}
-        run: |
-          set -euo pipefail
-          echo 'test-only moved-main control: evidence is complete; holding exactly 300 seconds before stage B can start'
-          sleep 300

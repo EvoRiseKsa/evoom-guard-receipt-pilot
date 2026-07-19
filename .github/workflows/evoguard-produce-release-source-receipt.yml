@@ -15,10 +15,62 @@ on:
 permissions: {}
 
 jobs:
-  preflight:
+  negative_main_move_gate:
+    # This test-only interlock is inert unless the exact administrator-controlled
+    # token is present.  It is deliberately before preflight, receipt creation,
+    # artifact download, and attestation so an early or invalid approval cannot
+    # produce a receipt.
     if: >-
       github.event.workflow_run.event == 'workflow_dispatch' &&
-      vars.EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED == 'true'
+      vars.EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED == 'true' &&
+      vars.EVOGUARD_RECEIPT_PILOT_NEGATIVE_MAIN_MOVE_CONTROL == 'moved-main-control-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    environment:
+      name: evoguard-receipt-pilot-negative-main-move
+      deployment: false
+    steps:
+      - name: Require the approved marker to advance protected main
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          EXPECTED_REVERIFY_WORKFLOW_ID: ${{ vars.EVOGUARD_RELEASE_SOURCE_REVERIFY_WORKFLOW_ID }}
+        with:
+          retries: 3
+          script: |
+            const run = context.payload.workflow_run;
+            const expected = process.env.EXPECTED_REVERIFY_WORKFLOW_ID || '';
+            if (!/^[1-9][0-9]*$/.test(expected)) {
+              throw new Error('EVOGUARD_RELEASE_SOURCE_REVERIFY_WORKFLOW_ID is not configured');
+            }
+            if (run.event !== 'workflow_dispatch' || run.conclusion !== 'success' ||
+                run.head_branch !== 'main' || run.head_repository?.full_name !== context.payload.repository.full_name ||
+                String(run.workflow_id) !== expected || !/^[0-9a-f]{40,64}$/.test(run.head_sha)) {
+              throw new Error('trigger is not the configured successful protected-main reverify run');
+            }
+            const { owner, repo } = context.repo;
+            const branch = (await github.rest.repos.getBranch({ owner, repo, branch: 'main' })).data;
+            if (branch.commit.sha === run.head_sha) {
+              throw new Error('moved-main control requires protected main to advance before approval');
+            }
+            const commit = (await github.rest.repos.getCommit({ owner, repo, ref: branch.commit.sha })).data;
+            if (commit.parents.length !== 1 || commit.parents[0].sha !== run.head_sha) {
+              throw new Error('moved-main control requires one direct protected-main successor');
+            }
+
+  preflight:
+    if: >-
+      always() &&
+      github.event.workflow_run.event == 'workflow_dispatch' &&
+      vars.EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED == 'true' &&
+      (
+        (vars.EVOGUARD_RECEIPT_PILOT_NEGATIVE_MAIN_MOVE_CONTROL != 'moved-main-control-v1' &&
+         needs.negative_main_move_gate.result == 'skipped') ||
+        (vars.EVOGUARD_RECEIPT_PILOT_NEGATIVE_MAIN_MOVE_CONTROL == 'moved-main-control-v1' &&
+         needs.negative_main_move_gate.result == 'success')
+      )
+    needs: negative_main_move_gate
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:

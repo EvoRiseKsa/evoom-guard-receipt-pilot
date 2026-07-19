@@ -39,21 +39,28 @@ judge-owned verifier pack, and registered A, B, and C workflows
 `.github/workflows/evoguard-reverify-release-source-receipt.yml`).  A is **disabled
 by default**: it runs only when the administrator-controlled Actions variable
 `EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED` is exactly `true`. That variable is
-absent by default. A has one test-only manual boolean input,
-`test_postverify_hold`, which defaults to `false` and merely pauses the
-unprivileged workflow for a fixed five minutes *after* it has uploaded its
-data-only evidence. It exists solely to perform the documented moved-`main`
-rejection control; it adds no permission, secret, Environment, write, or
-candidate execution. The activation variable is enabled only for one
-controlled round after B and C are reviewed, then deleted immediately after
-the terminal outcome. The required A/B workflow identifiers and raw-Git blob
-SHA anchors are recorded as administrator-controlled variables.
+absent by default. A has no timing hook. The activation variable is enabled
+only for one controlled round after B and C are reviewed, then deleted
+immediately after the terminal outcome. The required A/B workflow identifiers
+and raw-Git blob SHA anchors are recorded as administrator-controlled
+variables.
 
 B is triggered only by a completed A run, validates A's numeric workflow ID,
 re-derives the raw-Git controls without a candidate checkout, then can ask
 GitHub to attest the exact receipt bytes. It has the attestation permission
 only when the same activation variable is `true`; it is inactive now and does
 not by itself make an admission, release, deployment, or `ALLOW` decision.
+
+For the one documented negative moved-`main` control only, B additionally has
+an inert preflight Environment gate. It is selected only when the separate
+repository variable `EVOGUARD_RECEIPT_PILOT_NEGATIVE_MAIN_MOVE_CONTROL` is
+exactly `moved-main-control-v1`; every other value, including an unset value,
+skips it. The gate uses `deployment: false`, so it must have no secrets or
+environment variables. A separately configured MANA reviewer must approve it
+only after a reviewed marker-only PR has advanced `main`. An early approval
+fails before B preflight and therefore before any receipt, artifact download,
+or attestation. This is a test interlock, not a production deployment or
+admission gate.
 
 C is triggered only by a completed B run. It has read-only `actions`,
 `contents`, and attestation permissions, rechecks the current protected-main
