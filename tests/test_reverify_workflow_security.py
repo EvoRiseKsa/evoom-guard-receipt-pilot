@@ -85,6 +85,14 @@ class ReverifyWorkflowSecurityTests(unittest.TestCase):
         ):
             self.assertIn(required, self.workflow)
 
+    def test_hash_locked_bootstrap_does_not_pass_a_literal_escape_to_pip(self) -> None:
+        command = (
+            'python -m pip install --disable-pip-version-check --only-binary=:all: '
+            '--require-hashes -r "$RUNNER_TEMP/reverify-requirements.txt"'
+        )
+        self.assertIn(command, self.workflow)
+        self.assertNotIn("--only-binary=:all: " + "\\" * 2, self.workflow)
+
     def test_uploads_only_the_four_data_evidence_files(self) -> None:
         expected = (
             "${{ runner.temp }}/source.json",
