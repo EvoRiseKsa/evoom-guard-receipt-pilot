@@ -1,4 +1,4 @@
-"""Deliberately small public-safe CLI fixture used by the receipt pilot."""
+"""Deliberately small, integer-only public-safe CLI fixture for the receipt pilot."""
 
 from __future__ import annotations
 
