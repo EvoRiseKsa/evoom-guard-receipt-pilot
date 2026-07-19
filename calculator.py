@@ -11,10 +11,6 @@ def add(left: int, right: int) -> int:
 
     if type(left) is not int or type(right) is not int:
         raise TypeError("add requires integer operands")
-    if left == 0:
-        return right
-    if right == 0:
-        return left
     return left + right
 
 
