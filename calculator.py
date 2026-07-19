@@ -21,7 +21,10 @@ def add(left: int, right: int) -> int:
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the tiny public CLI protocol exercised by the judge-owned pack."""
 
-    parser = argparse.ArgumentParser(description="Public-safe receipt-pilot calculator")
+    parser = argparse.ArgumentParser(
+        description="Public-safe receipt-pilot calculator",
+        allow_abbrev=False,
+    )
     commands = parser.add_subparsers(dest="command", required=True)
     add_parser = commands.add_parser("add", help="add two integers")
     add_parser.add_argument("left", type=int)
