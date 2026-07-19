@@ -51,26 +51,33 @@ must stay absent except during a separately reviewed controlled round.
 
 ## Controlled moved-main rejection hook
 
-The manual A workflow has one **test-only** boolean input named
-`test_postverify_hold`, defaulting to `false`. When it is explicitly `true`,
-A first completes its normal raw-Git re-derivation and uploads its fixed
-data-only evidence set, then holds for exactly 300 seconds before it completes
-and can trigger B. It adds no permission, secret, Environment, OIDC identity,
-write operation, candidate execution, or variable-controlled duration.
+The negative control is held **before B preflight**, not in A and not in B's
+receipt job. It is inert by default and exists only if the repository variable
+`EVOGUARD_RECEIPT_PILOT_NEGATIVE_MAIN_MOVE_CONTROL` has the exact value
+`moved-main-control-v1` at the same time as the normal activation variable is
+exactly `true`.
 
-Its only purpose is a reproducible moved-`main` negative control: during that
-fixed window, merge one separately reviewed, public-safe marker-only PR that
-does not modify workflows, policy, packs, runtime pins, Actions variables, or
-evidence. B must then reject its predecessor because current protected `main`
-is no longer A's recorded `head_sha`; its receipt job must be skipped. C must
-then reject B's failed predecessor before artifact download. Delete the
-activation variable only after C reaches its terminal outcome. If the marker
-does not land within the 300-second window, or the observed jobs do not have
-those outcomes, the round is inconclusive and must not be reported as a pass.
+When selected, B's `negative_main_move_gate` waits on the dedicated
+`evoguard-receipt-pilot-negative-main-move` Environment with
+`deployment: false`. The Environment must be configured with exactly the
+separate MANA reviewer, self-review prevention, administrator-bypass disabled,
+and no secrets or environment variables. GitHub therefore holds the job
+without a runner or deployment record until review. After approval, the gate
+requires `main` to be a one-parent direct successor of A's recorded
+`head_sha`. Approving too early fails the gate before B preflight, artifact
+download, receipt creation, or attestation.
 
-This hook is not an admission feature, a production delay, a release gate, or
-a proof that any code is secure. It exists solely to make the existing B
-fail-closed binding testable without a timing race.
+The procedure is: prepare and approve a public-safe marker-only PR; enable the
+two exact repository variables; manually dispatch A with its ordinary inputs;
+wait for B's Environment review; merge the marker PR from the owner account;
+approve the Environment from MANA; then observe B's existing protected-main
+check fail and C reject B before artifact download. Delete both variables only
+after C reaches a terminal outcome. Preserve the run IDs, S/T commits, job
+states, artifact absence, and failure text. Any other ordering or outcome is
+inconclusive and must not be reported as a pass.
+
+This test interlock is not an admission feature, production delay, release
+gate, deployment, independent review, or proof that code is secure.
 
 ## P0 baseline: fixture and policy
 
