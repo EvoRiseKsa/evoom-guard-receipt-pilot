@@ -26,7 +26,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         allow_abbrev=False,
     )
     commands = parser.add_subparsers(dest="command", required=True)
-    add_parser = commands.add_parser("add", help="add two integers")
+    add_parser = commands.add_parser(
+        "add",
+        help="add two integers",
+        allow_abbrev=False,
+    )
     add_parser.add_argument("left", type=int)
     add_parser.add_argument("right", type=int)
     arguments = parser.parse_args(argv)
