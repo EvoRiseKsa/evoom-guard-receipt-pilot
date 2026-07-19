@@ -2,25 +2,52 @@
 
 ## Current live-evidence state
 
-The A-to-B-to-C chain is currently disabled and **no successful clean
-end-to-end round has been recorded**. The first controlled dispatch on
-2026-07-18 is useful negative evidence, not a positive receipt result:
+One controlled, public-safe A-to-B-to-C round completed successfully on
+2026-07-19. Every stage used the same protected-`main` commit
+`eaec5be2d1f98ea1aa665438ec90f9531d33da2b`; `main` remained at that commit
+through C's fresh verification, and the temporary activation variable was
+deleted immediately afterward.
 
-- [A reverify run 29664749999](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/actions/runs/29664749999)
-  completed with `ERROR` in the unprivileged judge before it produced a usable
-  successful verdict: `/usr/bin/python: No module named pytest`.
-- Its successor [B run 29664763518](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/actions/runs/29664763518)
-  rejected the non-successful A predecessor before producing a receipt or
-  requesting an attestation.
-- Its successor [C run 29664768973](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/actions/runs/29664768973)
-  rejected the non-successful B predecessor before downloading an artifact or
-  verifying a receipt.
+- [A reverify run 29673270182](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/actions/runs/29673270182)
+  completed successfully from manual `workflow_dispatch` and emitted the
+  source control and data-only evidence inputs.
+- [B producer run 29673284587](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/actions/runs/29673284587)
+  completed successfully from A's `workflow_run`, produced
+  `producer-receipt.json`, and requested one GitHub Artifact Attestation for
+  the exact receipt bytes.
+- [C fresh re-verification run 29673294302](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/actions/runs/29673294302)
+  completed successfully from B's `workflow_run`, rechecked the raw-Git and
+  workflow bindings, and freshly verified one attestation under its bounded
+  GitHub policy.
 
-[PR #7](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/pull/7)
-subsequently added a hash-locked `pytest` bootstrap to A. Its passing Pilot CI
-does not prove the A-to-B-to-C chain: no A, B, or C run has been dispatched
-after that bootstrap. The activation variable remains unset; do not enable it
-until the live-round prerequisites below are satisfied and reviewed.
+The archived receipt hash is
+`6cce351ea8722d5c1f6055a265baa4492de7d5bbdcb07721e5dafa3bb444345d`.
+The complete exact-byte public evidence and its manifest are in
+[evidence/round1](evidence/round1/README.md).
+
+This is a successful *evidence-chain* result only. It is not an `ALLOW`,
+admission, release, deployment, merge decision, independent review, or proof
+of code correctness/security. In particular, GitHub's attestation proves the
+identity and provenance of B's receipt bytes; it does not independently prove
+that A executed Guard.
+
+## Historical fail-closed controls
+
+The preceding attempts remain useful negative evidence:
+
+- [A run 29664749999](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/actions/runs/29664749999)
+  ended with the unprivileged-judge dependency error `/usr/bin/python: No
+  module named pytest`; B and C rejected it without a receipt or attestation.
+- [A run 29672581131](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/actions/runs/29672581131)
+  failed before candidate execution because a shell continuation passed a
+  literal backslash to `pip`; its B and C successors again rejected the failed
+  predecessor without producing or verifying a receipt.
+
+The second failure was corrected by [PR #11](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/pull/11),
+then a new source-only candidate was merged in
+[PR #12](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/pull/12)
+before the recorded positive round. The activation variable is absent now and
+must stay absent except during a separately reviewed controlled round.
 
 ## P0 baseline: fixture and policy
 

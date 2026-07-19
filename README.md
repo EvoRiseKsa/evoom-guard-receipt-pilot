@@ -39,9 +39,10 @@ judge-owned verifier pack, and registered A, B, and C workflows
 `.github/workflows/evoguard-reverify-release-source-receipt.yml`).  A is **disabled
 by default**: it has no inputs and runs only when the administrator-controlled
 Actions variable `EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED` is exactly `true`.
-That variable must remain unset until B and C are reviewed and merged, and the
-required A/B workflow identifiers and raw-Git blob SHA anchors have been
-recorded.
+That variable is absent by default. It is enabled only for one controlled
+round after B and C are reviewed, then deleted immediately after the terminal
+outcome. The required A/B workflow identifiers and raw-Git blob SHA anchors
+are recorded as administrator-controlled variables.
 
 B is triggered only by a completed A run, validates A's numeric workflow ID,
 re-derives the raw-Git controls without a candidate checkout, then can ask
@@ -62,9 +63,10 @@ It does **not** run A, B, or C, produce a receipt, publish software, or make
 an admission decision.
 
 See [PILOT_STATUS.md](PILOT_STATUS.md) for the staged plan and hard stop
-conditions. **No successful clean A-to-B-to-C round has been recorded.** The
-status file records the exact failed-closed first attempt and the remaining
-prerequisites before any new dispatch.
+conditions. One controlled clean round completed on 2026-07-19; its exact
+public-safe evidence is retained in
+[evidence/round1](evidence/round1/README.md). The status file records both
+the completed round and prior fail-closed attempts.
 
 ## What success means
 
