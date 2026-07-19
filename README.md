@@ -62,7 +62,9 @@ It does **not** run A, B, or C, produce a receipt, publish software, or make
 an admission decision.
 
 See [PILOT_STATUS.md](PILOT_STATUS.md) for the staged plan and hard stop
-conditions.
+conditions. **No successful clean A-to-B-to-C round has been recorded.** The
+status file records the exact failed-closed first attempt and the remaining
+prerequisites before any new dispatch.
 
 ## What success means
 

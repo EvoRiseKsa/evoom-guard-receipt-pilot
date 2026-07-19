@@ -1,5 +1,27 @@
 # Pilot status and execution boundary
 
+## Current live-evidence state
+
+The A-to-B-to-C chain is currently disabled and **no successful clean
+end-to-end round has been recorded**. The first controlled dispatch on
+2026-07-18 is useful negative evidence, not a positive receipt result:
+
+- [A reverify run 29664749999](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/actions/runs/29664749999)
+  completed with `ERROR` in the unprivileged judge before it produced a usable
+  successful verdict: `/usr/bin/python: No module named pytest`.
+- Its successor [B run 29664763518](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/actions/runs/29664763518)
+  rejected the non-successful A predecessor before producing a receipt or
+  requesting an attestation.
+- Its successor [C run 29664768973](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/actions/runs/29664768973)
+  rejected the non-successful B predecessor before downloading an artifact or
+  verifying a receipt.
+
+[PR #7](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/pull/7)
+subsequently added a hash-locked `pytest` bootstrap to A. Its passing Pilot CI
+does not prove the A-to-B-to-C chain: no A, B, or C run has been dispatched
+after that bootstrap. The activation variable remains unset; do not enable it
+until the live-round prerequisites below are satisfied and reviewed.
+
 ## P0 baseline: fixture and policy
 
 This baseline establishes a public-safe executable fixture, a base-owned
