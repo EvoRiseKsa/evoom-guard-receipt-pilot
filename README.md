@@ -37,12 +37,17 @@ judge-owned verifier pack, and registered A, B, and C workflows
 (`.github/workflows/evoguard-release-source-reverify.yml`,
 `.github/workflows/evoguard-produce-release-source-receipt.yml`, and
 `.github/workflows/evoguard-reverify-release-source-receipt.yml`).  A is **disabled
-by default**: it has no inputs and runs only when the administrator-controlled
-Actions variable `EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED` is exactly `true`.
-That variable is absent by default. It is enabled only for one controlled
-round after B and C are reviewed, then deleted immediately after the terminal
-outcome. The required A/B workflow identifiers and raw-Git blob SHA anchors
-are recorded as administrator-controlled variables.
+by default**: it runs only when the administrator-controlled Actions variable
+`EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED` is exactly `true`. That variable is
+absent by default. A has one test-only manual boolean input,
+`test_postverify_hold`, which defaults to `false` and merely pauses the
+unprivileged workflow for a fixed five minutes *after* it has uploaded its
+data-only evidence. It exists solely to perform the documented moved-`main`
+rejection control; it adds no permission, secret, Environment, write, or
+candidate execution. The activation variable is enabled only for one
+controlled round after B and C are reviewed, then deleted immediately after
+the terminal outcome. The required A/B workflow identifiers and raw-Git blob
+SHA anchors are recorded as administrator-controlled variables.
 
 B is triggered only by a completed A run, validates A's numeric workflow ID,
 re-derives the raw-Git controls without a candidate checkout, then can ask
