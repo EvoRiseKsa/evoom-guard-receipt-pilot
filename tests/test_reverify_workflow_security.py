@@ -21,6 +21,20 @@ class ReverifyWorkflowSecurityTests(unittest.TestCase):
         self.assertNotIn("\n  push:", self.workflow)
         self.assertNotIn("\n  pull_request:", self.workflow)
 
+    def test_moved_main_test_hook_is_opt_in_bounded_and_post_verification_only(self) -> None:
+        for required in (
+            "test_postverify_hold:",
+            "type: boolean",
+            "default: false",
+            "if: ${{ inputs.test_postverify_hold == true }}",
+            "sleep 300",
+        ):
+            self.assertIn(required, self.workflow)
+        evidence = "Upload data-only reverify evidence"
+        hold = "Bounded post-verification hold for moved-main control"
+        self.assertLess(self.workflow.index(evidence), self.workflow.index(hold))
+        self.assertNotIn("EVOGUARD_RECEIPT_PILOT_POSTVERIFY_HOLD", self.workflow)
+
     def test_has_no_privileged_or_admission_capability(self) -> None:
         self.assertIn("permissions: {}", self.workflow)
         self.assertNotIn("contents: write", self.workflow)

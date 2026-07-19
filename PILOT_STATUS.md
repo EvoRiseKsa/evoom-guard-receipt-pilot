@@ -49,6 +49,29 @@ then a new source-only candidate was merged in
 before the recorded positive round. The activation variable is absent now and
 must stay absent except during a separately reviewed controlled round.
 
+## Controlled moved-main rejection hook
+
+The manual A workflow has one **test-only** boolean input named
+`test_postverify_hold`, defaulting to `false`. When it is explicitly `true`,
+A first completes its normal raw-Git re-derivation and uploads its fixed
+data-only evidence set, then holds for exactly 300 seconds before it completes
+and can trigger B. It adds no permission, secret, Environment, OIDC identity,
+write operation, candidate execution, or variable-controlled duration.
+
+Its only purpose is a reproducible moved-`main` negative control: during that
+fixed window, merge one separately reviewed, public-safe marker-only PR that
+does not modify workflows, policy, packs, runtime pins, Actions variables, or
+evidence. B must then reject its predecessor because current protected `main`
+is no longer A's recorded `head_sha`; its receipt job must be skipped. C must
+then reject B's failed predecessor before artifact download. Delete the
+activation variable only after C reaches its terminal outcome. If the marker
+does not land within the 300-second window, or the observed jobs do not have
+those outcomes, the round is inconclusive and must not be reported as a pass.
+
+This hook is not an admission feature, a production delay, a release gate, or
+a proof that any code is secure. It exists solely to make the existing B
+fail-closed binding testable without a timing race.
+
 ## P0 baseline: fixture and policy
 
 This baseline establishes a public-safe executable fixture, a base-owned
