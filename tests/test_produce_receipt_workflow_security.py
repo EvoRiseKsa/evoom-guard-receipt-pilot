@@ -29,9 +29,39 @@ class ProduceReceiptWorkflowSecurityTests(unittest.TestCase):
         self.assertIn("id-token: write", self.workflow)
         self.assertNotIn("contents: write", self.workflow)
         self.assertNotIn("actions/checkout", self.workflow)
-        self.assertNotIn("environment:", self.workflow)
+        self.assertEqual(self.workflow.count("environment:"), 1)
         self.assertNotIn("self-hosted", self.workflow)
         self.assertNotIn("release create", self.workflow)
+
+    def test_test_only_moved_main_gate_is_before_preflight_and_receipt(self) -> None:
+        for required in (
+            "negative_main_move_gate:",
+            "EVOGUARD_RECEIPT_PILOT_NEGATIVE_MAIN_MOVE_CONTROL == 'moved-main-control-v1'",
+            "evoguard-receipt-pilot-negative-main-move",
+            "deployment: false",
+            "Require the approved marker to advance protected main",
+            "moved-main control requires protected main to advance before approval",
+            "moved-main control requires one direct protected-main successor",
+            "needs: negative_main_move_gate",
+            "needs.negative_main_move_gate.result == 'success'",
+            "needs.negative_main_move_gate.result == 'skipped'",
+        ):
+            self.assertIn(required, self.workflow)
+        gate = self.workflow.index("negative_main_move_gate:")
+        preflight = self.workflow.index("  preflight:")
+        receipt = self.workflow.index("  receipt:")
+        current_main_check = self.workflow.index("protected main changed after reverify")
+        download = self.workflow.index("Download exactly the triggering reverify evidence attempt")
+        self.assertLess(gate, preflight)
+        self.assertLess(preflight, receipt)
+        self.assertLess(gate, current_main_check)
+        self.assertLess(current_main_check, download)
+        gate_text = self.workflow[gate:preflight]
+        self.assertIn("permissions:\n      contents: read", gate_text)
+        self.assertNotIn("actions: read", gate_text)
+        self.assertNotIn("attestations: write", gate_text)
+        self.assertNotIn("id-token: write", gate_text)
+        self.assertNotIn("secrets.", gate_text)
 
     def test_pins_the_trigger_and_rechecks_raw_git_before_receipt_creation(self) -> None:
         for required in (
