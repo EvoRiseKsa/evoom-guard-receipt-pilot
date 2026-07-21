@@ -77,8 +77,12 @@ an admission decision.
 See [PILOT_STATUS.md](PILOT_STATUS.md) for the staged plan and hard stop
 conditions. One controlled clean round completed on 2026-07-19; its exact
 public-safe evidence is retained in
-[evidence/round1](evidence/round1/README.md). The status file records both
-the completed round and prior fail-closed attempts.
+[evidence/round1](evidence/round1/README.md). A controlled moved-`main`
+rejection completed on 2026-07-21 and is retained in
+[evidence/negative-main-move](evidence/negative-main-move/README.md). The
+status file records those rounds, the prior fail-closed attempts, and the two
+negative controls that remain outstanding. Both temporary activation
+variables are absent after the completed control.
 
 ## What success means
 

@@ -1,0 +1,47 @@
+{
+  "schema_version": "evoguard-receipt-negative-main-move-v1",
+  "repository": "EvoRiseKsa/evoom-guard-receipt-pilot",
+  "observed_utc": "2026-07-21T20:49:49Z",
+  "claim_scope": "controlled-fail-closed-non-admitting-observation",
+  "source_commit_sha": "a3fc9f14a8c683fa5466d0d4124826f3151cb4d0",
+  "target_commit_sha": "1e7b0213ada2f03f1b4e3028a37398b45ad6eb02",
+  "target_parent_sha": "a3fc9f14a8c683fa5466d0d4124826f3151cb4d0",
+  "marker_pr": {
+    "number": 16,
+    "head_sha": "6f5ea52756a7a335bdba38c025dc878574e90eee",
+    "merged_utc": "2026-07-21T20:49:02Z"
+  },
+  "a_reverify": {
+    "run_id": 29675987307,
+    "conclusion": "success",
+    "head_sha": "a3fc9f14a8c683fa5466d0d4124826f3151cb4d0"
+  },
+  "b_producer": {
+    "run_id": 29676005850,
+    "conclusion": "failure",
+    "head_sha": "a3fc9f14a8c683fa5466d0d4124826f3151cb4d0",
+    "negative_main_move_gate_conclusion": "success",
+    "preflight_conclusion": "failure",
+    "receipt_conclusion": "skipped",
+    "failure_text": "protected main changed after reverify; refuse receipt production",
+    "artifact_count": 0
+  },
+  "c_fresh_reverification": {
+    "run_id": 29867423549,
+    "conclusion": "failure",
+    "head_sha": "1e7b0213ada2f03f1b4e3028a37398b45ad6eb02",
+    "preflight_conclusion": "failure",
+    "download_conclusion": "skipped",
+    "failure_text": "trigger is not the configured successful producer-receipt workflow_run",
+    "artifact_count": 0
+  },
+  "main_ci": {
+    "run_id": 29867381230,
+    "conclusion": "success",
+    "head_sha": "1e7b0213ada2f03f1b4e3028a37398b45ad6eb02"
+  },
+  "temporary_variables_removed": [
+    "EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED",
+    "EVOGUARD_RECEIPT_PILOT_NEGATIVE_MAIN_MOVE_CONTROL"
+  ]
+}
