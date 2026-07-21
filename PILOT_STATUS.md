@@ -31,7 +31,7 @@ of code correctness/security. In particular, GitHub's attestation proves the
 identity and provenance of B's receipt bytes; it does not independently prove
 that A executed Guard.
 
-## Historical fail-closed controls
+## Completed fail-closed controls
 
 The preceding attempts remain useful negative evidence:
 
@@ -49,7 +49,27 @@ then a new source-only candidate was merged in
 before the recorded positive round. The activation variable is absent now and
 must stay absent except during a separately reviewed controlled round.
 
-## Controlled moved-main rejection hook
+The controlled moved-`main` round completed on 2026-07-21:
+
+- A [run 29675987307](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/actions/runs/29675987307)
+  succeeded at `a3fc9f14a8c683fa5466d0d4124826f3151cb4d0` (S).
+- Marker-only [PR #16](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/pull/16)
+  advanced protected `main` to the one-parent successor
+  `1e7b0213ada2f03f1b4e3028a37398b45ad6eb02` (T) while B waited at its
+  separately protected test Environment.
+- B [run 29676005850](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/actions/runs/29676005850)
+  passed that test gate, then failed preflight with `protected main changed
+  after reverify; refuse receipt production`; its receipt job was skipped and
+  it produced zero artifacts.
+- C [run 29867423549](https://github.com/EvoRiseKsa/evoom-guard-receipt-pilot/actions/runs/29867423549)
+  rejected the failed B predecessor before download and produced zero
+  artifacts.
+- Both temporary activation variables were deleted after C terminated.
+
+The bounded archival record is in
+[evidence/negative-main-move](evidence/negative-main-move/README.md).
+
+## Controlled moved-main rejection hook and reproduced procedure
 
 The negative control is held **before B preflight**, not in A and not in B's
 receipt job. It is inert by default and exists only if the repository variable
@@ -67,7 +87,7 @@ requires `main` to be a one-parent direct successor of A's recorded
 `head_sha`. Approving too early fails the gate before B preflight, artifact
 download, receipt creation, or attestation.
 
-The procedure is: prepare and approve a public-safe marker-only PR; enable the
+The procedure used was: prepare and approve a public-safe marker-only PR; enable the
 two exact repository variables; manually dispatch A with its ordinary inputs;
 wait for B's Environment review; merge the marker PR from the owner account;
 approve the Environment from MANA; then observe B's existing protected-main
@@ -173,10 +193,10 @@ negative rounds while `main` stays unchanged.
 
 Before any V2 or admission discussion, preserve public-safe evidence for:
 
-- one clean A-to-B-to-C run;
-- a moved-`main` rejection;
-- an altered-artifact rejection;
-- a wrong workflow/run-attempt rejection; and
-- a failed-A rejection.
+- [x] one clean A-to-B-to-C run;
+- [x] a moved-`main` rejection;
+- [ ] an altered-artifact rejection;
+- [ ] a wrong workflow/run-attempt rejection; and
+- [x] a failed-A rejection.
 
 No result from this repository is production approval or a release decision.
