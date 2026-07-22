@@ -89,8 +89,10 @@ public-safe evidence is retained in
 rejection completed on 2026-07-21 and is retained in
 [evidence/negative-main-move](evidence/negative-main-move/README.md). The
 status file records those rounds, the prior fail-closed attempts, and the two
-negative controls that remain outstanding. Both temporary activation
-variables are absent after the completed control.
+receipt-negative categories completed on 2026-07-22. Their exact public-safe
+data is retained in
+[evidence/negative-receipt-matrix](evidence/negative-receipt-matrix/README.md).
+Both temporary activation variables are absent after the completed controls.
 
 ## What success means
 

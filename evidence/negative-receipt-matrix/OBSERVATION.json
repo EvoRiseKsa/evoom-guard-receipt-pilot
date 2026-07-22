@@ -1,0 +1,106 @@
+{
+  "admitting": false,
+  "artifact_attestation_subject_sha256": "7717c53a6a8874955aaf4cbc556fe69042be562e48dc236d9c04043b6b961061",
+  "artifacts": {
+    "a_control": {
+      "digest": "sha256:e9d3b820e1bfaad9af2592cdb2b902f83ec6dafccca706f0889ee0a545b4c4bb",
+      "id": 8514511618,
+      "name": "evoguard-release-source-control-v1-1"
+    },
+    "a_evidence": {
+      "digest": "sha256:ae79ff98c270b7462e0d784ee659c1da3be3fa65327c92c6f980e7b038aa23bf",
+      "id": 8514518380,
+      "name": "evoguard-release-source-evidence-v1-1"
+    },
+    "altered_artifact_control": {
+      "digest": "sha256:c461ccb94944313e66da803cc661d79369eabfe526236cd31e9da59666847891",
+      "id": 8514585307,
+      "name": "evoguard-release-source-negative-control-v1-altered-artifact-v1-4"
+    },
+    "b_receipt": {
+      "digest": "sha256:e5d522037f4c90a9980a086a4df7ed2f00c2c6732ca4f04fcb3ccabd7f5c488c",
+      "id": 8514524549,
+      "name": "evoguard-release-source-producer-receipt-v1-1"
+    },
+    "wrong_run_attempt_control": {
+      "digest": "sha256:5b1cb4e9cf032a5bdbb73d8451d0721f07d8d96ea588cfc19e9e026d18857ef1",
+      "id": 8514570403,
+      "name": "evoguard-release-source-negative-control-v1-wrong-run-attempt-v1-3",
+      "superseded_on_github_by_later_rerun": true
+    },
+    "wrong_workflow_control": {
+      "digest": "sha256:bc4851212f364de7ef13e3914993c96860912891d47e2fbb5cb342ac7a04c2ef",
+      "id": 8514544181,
+      "name": "evoguard-release-source-negative-control-v1-wrong-workflow-v1-2",
+      "superseded_on_github_by_later_rerun": true
+    }
+  },
+  "bootstrap_guard_sha256": "47bdcfbe2814fdd687afd62d1c476cbd5248db65683c97d2867a56dbbf9ee643",
+  "controls": {
+    "altered_artifact": {
+      "after_sha256": "9247857de8a51c23d93fed758093f82f5ec51e6e4536841a9ad0800d69546835",
+      "attempt": 4,
+      "before_sha256": "7717c53a6a8874955aaf4cbc556fe69042be562e48dc236d9c04043b6b961061",
+      "provider_exit_code": 1,
+      "rejection_layer": "github-artifact-attestation-subject-digest",
+      "result": "EXPECTED_REJECTION",
+      "semantic_change": false
+    },
+    "wrong_run_attempt": {
+      "attempt": 3,
+      "expected_run_attempt": 2,
+      "observed_run_attempt": 1,
+      "rejection_layer": "producer-run-attempt-binding",
+      "result": "EXPECTED_REJECTION"
+    },
+    "wrong_workflow": {
+      "attempt": 2,
+      "deliberately_wrong_workflow_id": "315913599",
+      "expected_workflow_id": "315921551",
+      "rejection_layer": "producer-workflow-identity-preflight",
+      "result": "EXPECTED_REJECTION"
+    }
+  },
+  "head_sha": "3276acc17ac009115530e46d73ee743c53da536d",
+  "head_tree_sha": "c391e5ef537d8c78334100edc085605c5a7c7925",
+  "independent_review": false,
+  "repository": "EvoRiseKsa/evoom-guard-receipt-pilot",
+  "runs": {
+    "a": {
+      "attempt": 1,
+      "conclusion": "success",
+      "id": 29880368085,
+      "workflow_id": 315913599
+    },
+    "b": {
+      "attempt": 1,
+      "conclusion": "success",
+      "id": 29880394791,
+      "workflow_id": 315921551
+    },
+    "c": {
+      "conclusions": {
+        "2": "success",
+        "3": "success",
+        "4": "success"
+      },
+      "id": 29880410278,
+      "workflow_id": 315927633
+    }
+  },
+  "same_owner_operational_roles": [
+    "EvoRiseKsa",
+    "MANA-awam"
+  ],
+  "schema_version": "evoguard-receipt-negative-matrix-v1",
+  "source_parent_sha": "d04d9f759205722cae319a9e46790b737237648a",
+  "temporary_variables_deleted": [
+    "EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED",
+    "EVOGUARD_RECEIPT_PILOT_NEGATIVE_RECEIPT_CONTROL"
+  ],
+  "workflow_blob_shas": {
+    "a": "73a1add9053e33bd249dc4b986a24fdf6cfa537c",
+    "b": "813e0492c0b33308b6dd027511dc610f574d7691",
+    "c": "19b74fd0ec298eda71270832973ce335b70f82fc"
+  }
+}

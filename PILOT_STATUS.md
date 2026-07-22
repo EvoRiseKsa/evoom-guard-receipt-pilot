@@ -195,11 +195,18 @@ Before any V2 or admission discussion, preserve public-safe evidence for:
 
 - [x] one clean A-to-B-to-C run;
 - [x] a moved-`main` rejection;
-- [ ] an altered-artifact rejection;
-- [ ] a wrong workflow/run-attempt rejection; and
+- [x] an altered-artifact rejection;
+- [x] wrong-workflow and wrong-run-attempt rejections; and
 - [x] a failed-A rejection.
 
 No result from this repository is production approval or a release decision.
+
+The receipt-negative matrix completed on 2026-07-22 at protected `main`
+`3276acc17ac009115530e46d73ee743c53da536d`. C run `29880410278` attempts 2,
+3, and 4 respectively recorded wrong-workflow, wrong-run-attempt, and
+altered-artifact `EXPECTED_REJECTION` results. The exact public-safe data is
+frozen in [evidence/negative-receipt-matrix](evidence/negative-receipt-matrix/README.md).
+Both temporary activation variables are absent.
 
 ## Dormant receipt-negative control
 
