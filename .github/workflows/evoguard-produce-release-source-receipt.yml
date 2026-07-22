@@ -113,6 +113,10 @@ jobs:
             core.setOutput('repository_id', String(context.payload.repository.id));
 
   receipt:
+    # `preflight` intentionally uses always() because its optional test gate is
+    # skipped in ordinary rounds. Repeat an explicit success predicate here so
+    # GitHub does not propagate that transitive skip into this job.
+    if: always() && needs.preflight.result == 'success'
     needs: preflight
     runs-on: ubuntu-latest
     timeout-minutes: 15

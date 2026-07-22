@@ -44,6 +44,7 @@ class ProduceReceiptWorkflowSecurityTests(unittest.TestCase):
             "needs: negative_main_move_gate",
             "needs.negative_main_move_gate.result == 'success'",
             "needs.negative_main_move_gate.result == 'skipped'",
+            "if: always() && needs.preflight.result == 'success'",
         ):
             self.assertIn(required, self.workflow)
         gate = self.workflow.index("negative_main_move_gate:")
@@ -55,6 +56,9 @@ class ProduceReceiptWorkflowSecurityTests(unittest.TestCase):
         self.assertLess(preflight, receipt)
         self.assertLess(gate, current_main_check)
         self.assertLess(current_main_check, download)
+        receipt_text = self.workflow[receipt:]
+        self.assertIn("needs: preflight", receipt_text)
+        self.assertIn("if: always() && needs.preflight.result == 'success'", receipt_text)
         gate_text = self.workflow[gate:preflight]
         self.assertIn("permissions:\n      contents: read", gate_text)
         self.assertNotIn("actions: read", gate_text)
