@@ -4,7 +4,9 @@
 # EVOGUARD_RECEIPT_PILOT_CHAIN_ENABLED variable is set to true after A, B, and
 # C have been reviewed.  It never checks out or executes candidate source.  A
 # successful run is non-admitting evidence only: it has no signing, release,
-# deployment, publication, merge, or ALLOW authority.
+# deployment, publication, merge, or ALLOW authority. Three exact, inert
+# repository-variable values can exercise expected rejection paths. Every
+# other value fails closed; the variable is absent outside a controlled round.
 name: EvoGuard Receipt Pilot Reverify Receipt
 
 on:
@@ -26,20 +28,33 @@ jobs:
       attestations: read
       contents: read
     steps:
-      - name: Validate the exact configured producer-receipt run before any artifact download
+      - id: trigger
+        name: Validate the exact configured producer-receipt run before any artifact download
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           EXPECTED_RECEIPT_WORKFLOW_ID: ${{ vars.EVOGUARD_RELEASE_SOURCE_RECEIPT_WORKFLOW_ID }}
+          EXPECTED_REVERIFY_WORKFLOW_ID: ${{ vars.EVOGUARD_RELEASE_SOURCE_REVERIFY_WORKFLOW_ID }}
+          NEGATIVE_CONTROL: ${{ vars.EVOGUARD_RECEIPT_PILOT_NEGATIVE_RECEIPT_CONTROL }}
         with:
           retries: 3
           script: |
             const run = context.payload.workflow_run;
             const expected = process.env.EXPECTED_RECEIPT_WORKFLOW_ID || '';
-            if (!/^[1-9][0-9]*$/.test(expected) ||
-                String(run.workflow_id) !== expected || run.event !== 'workflow_run' ||
+            const reverify = process.env.EXPECTED_REVERIFY_WORKFLOW_ID || '';
+            const control = process.env.NEGATIVE_CONTROL || '';
+            const allowed = new Set(['', 'altered-artifact-v1', 'wrong-workflow-v1', 'wrong-run-attempt-v1']);
+            if (!allowed.has(control)) {
+              throw new Error('unrecognized receipt negative-control value');
+            }
+            if (!/^[1-9][0-9]*$/.test(expected) || !/^[1-9][0-9]*$/.test(reverify) || expected === reverify) {
+              throw new Error('protected workflow IDs are invalid or not distinct');
+            }
+            const commonInvalid = run.event !== 'workflow_run' ||
                 run.conclusion !== 'success' || run.head_branch !== 'main' ||
                 run.head_repository?.full_name !== context.payload.repository.full_name ||
-                !/^[0-9a-f]{40,64}$/.test(run.head_sha)) {
+                !/^[0-9a-f]{40,64}$/.test(run.head_sha);
+            const invalidRun = String(run.workflow_id) !== expected || commonInvalid;
+            if (invalidRun) {
               throw new Error('trigger is not the configured successful producer-receipt workflow_run');
             }
             const { owner, repo } = context.repo;
@@ -47,8 +62,49 @@ jobs:
             if (current !== run.head_sha || context.sha !== run.head_sha) {
               throw new Error('protected main changed after receipt production');
             }
+            if (control === 'wrong-workflow-v1') {
+              const invalidWrongWorkflow = String(run.workflow_id) !== reverify || commonInvalid;
+              if (!invalidWrongWorkflow) {
+                throw new Error('wrong-workflow control did not exercise the intended configured producer run');
+              }
+              core.notice('EXPECTED_REJECTION: trigger is not the configured successful producer-receipt workflow_run');
+              core.setOutput('stop_after_preflight', 'true');
+              core.setOutput('negative_control_passed', 'true');
+            }
+
+      - name: Record wrong-workflow expected rejection
+        if: steps.trigger.outputs.stop_after_preflight == 'true'
+        env:
+          EXPECTED_RECEIPT_WORKFLOW_ID: ${{ vars.EVOGUARD_RELEASE_SOURCE_RECEIPT_WORKFLOW_ID }}
+          DELIBERATELY_WRONG_WORKFLOW_ID: ${{ vars.EVOGUARD_RELEASE_SOURCE_REVERIFY_WORKFLOW_ID }}
+          PRODUCER_RUN_ID: ${{ github.event.workflow_run.id }}
+          PRODUCER_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+          PRODUCER_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          python - "$RUNNER_TEMP/negative-observation.json" <<'PY'
+          import json, os, sys
+
+          payload = {
+              'schema_version': 'evoguard-receipt-negative-control-v1',
+              'control': 'wrong-workflow-v1',
+              'result': 'EXPECTED_REJECTION',
+              'rejection_layer': 'producer-workflow-identity-preflight',
+              'reason': 'trigger is not the configured successful producer-receipt workflow_run',
+              'expected_workflow_id': os.environ['EXPECTED_RECEIPT_WORKFLOW_ID'],
+              'deliberately_wrong_workflow_id': os.environ['DELIBERATELY_WRONG_WORKFLOW_ID'],
+              'observed_producer_run_id': os.environ['PRODUCER_RUN_ID'],
+              'observed_producer_run_attempt': int(os.environ['PRODUCER_RUN_ATTEMPT']),
+              'observed_head_sha': os.environ['PRODUCER_HEAD_SHA'],
+              'admitting': False,
+          }
+          with open(sys.argv[1], 'w', encoding='utf-8', newline='\n') as out:
+              json.dump(payload, out, sort_keys=True, separators=(',', ':'))
+              out.write('\n')
+          PY
 
       - name: Download exact producer receipt attempt
+        if: steps.trigger.outputs.stop_after_preflight != 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: evoguard-release-source-producer-receipt-v1-${{ github.event.workflow_run.run_attempt }}
@@ -57,6 +113,7 @@ jobs:
           github-token: ${{ github.token }}
 
       - name: Snapshot only regular bounded producer inputs before reading them
+        if: steps.trigger.outputs.stop_after_preflight != 'true'
         env:
           INPUTS: ${{ runner.temp }}/receipt-inputs
           SNAPSHOT: ${{ runner.temp }}/receipt-inputs-safe
@@ -116,6 +173,7 @@ jobs:
           PY
 
       - name: Download and pin the receipt-capable Guard runtime
+        if: steps.trigger.outputs.stop_after_preflight != 'true'
         env:
           BOOTSTRAP_URL: ${{ vars.EVOGUARD_BOOTSTRAP_RUNTIME_URL }}
           BOOTSTRAP_SHA256: ${{ vars.EVOGUARD_BOOTSTRAP_RUNTIME_SHA256 }}
@@ -128,7 +186,9 @@ jobs:
           printf '%s  %s\n' "$BOOTSTRAP_SHA256" "$RUNNER_TEMP/evo-guard.pyz" | sha256sum --check
           chmod 0755 "$RUNNER_TEMP/evo-guard.pyz"
 
-      - name: Bind downloaded inputs to both protected workflow runs
+      - id: binding
+        name: Bind downloaded inputs to both protected workflow runs
+        if: steps.trigger.outputs.stop_after_preflight != 'true'
         env:
           INPUTS: ${{ runner.temp }}/receipt-inputs-safe
           EXPECTED_REVERIFY_WORKFLOW_ID: ${{ vars.EVOGUARD_RELEASE_SOURCE_REVERIFY_WORKFLOW_ID }}
@@ -139,6 +199,7 @@ jobs:
           RECEIPT_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
           REPOSITORY_ID: ${{ github.event.repository.id }}
           TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+          NEGATIVE_CONTROL: ${{ vars.EVOGUARD_RECEIPT_PILOT_NEGATIVE_RECEIPT_CONTROL }}
         run: |
           set -euo pipefail
           python - "$INPUTS/source.json" "$INPUTS/context.json" "$INPUTS/producer.json" <<'PY'
@@ -185,13 +246,16 @@ jobs:
           if source.get('workflow_run_id') != context.get('run_id') or source.get('workflow_run_attempt') != context.get('run_attempt'):
               raise SystemExit('source and context do not identify the same reverify run')
 
+          expected_attempt = int(values['RECEIPT_RUN_ATTEMPT'])
+          if os.environ.get('NEGATIVE_CONTROL') == 'wrong-run-attempt-v1':
+              expected_attempt += 1
           producer_expected = {
               'workflow_repository': values['GITHUB_REPOSITORY'],
               'workflow_repository_id': values['REPOSITORY_ID'],
               'workflow_id': values['EXPECTED_RECEIPT_WORKFLOW_ID'],
               'workflow_path': '.github/workflows/evoguard-produce-release-source-receipt.yml',
               'workflow_run_id': values['RECEIPT_RUN_ID'],
-              'workflow_run_attempt': int(values['RECEIPT_RUN_ATTEMPT']),
+              'workflow_run_attempt': expected_attempt,
               'workflow_event': 'workflow_run',
               'workflow_ref': 'refs/heads/main',
               'workflow_commit_sha': values['TARGET_SHA'],
@@ -203,16 +267,89 @@ jobs:
               'trigger_workflow_run_attempt': source.get('workflow_run_attempt'),
               'runner_class': 'github-hosted',
           }
-          for key, value in producer_expected.items():
-              if producer.get(key) != value:
-                  raise SystemExit(f'producer {key} does not match its protected workflow binding')
+          mismatch = next(
+              (key for key, value in producer_expected.items() if producer.get(key) != value),
+              None,
+          )
+          control = os.environ.get('NEGATIVE_CONTROL', '')
+          if control == 'wrong-run-attempt-v1':
+              if mismatch != 'workflow_run_attempt':
+                  raise SystemExit('wrong-run-attempt control did not reach the intended binding rejection')
+              payload = {
+                  'schema_version': 'evoguard-receipt-negative-control-v1',
+                  'control': control,
+                  'result': 'EXPECTED_REJECTION',
+                  'rejection_layer': 'producer-run-attempt-binding',
+                  'reason': 'producer workflow_run_attempt does not match its protected workflow binding',
+                  'expected_run_attempt': expected_attempt,
+                  'observed_run_attempt': producer.get('workflow_run_attempt'),
+                  'producer_run_id': values['RECEIPT_RUN_ID'],
+                  'head_sha': values['TARGET_SHA'],
+                  'admitting': False,
+              }
+              with open(os.path.join(os.environ['RUNNER_TEMP'], 'negative-observation.json'), 'w', encoding='utf-8', newline='\n') as out:
+                  json.dump(payload, out, sort_keys=True, separators=(',', ':'))
+                  out.write('\n')
+              with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8', newline='\n') as out:
+                  out.write('stop_after_binding=true\nnegative_control_passed=true\n')
+              print('EXPECTED_REJECTION: producer workflow_run_attempt does not match its protected workflow binding')
+              raise SystemExit(0)
+          if mismatch is not None:
+              raise SystemExit(f'producer {mismatch} does not match its protected workflow binding')
           if producer.get('workflow_id') == producer.get('trigger_workflow_id'):
               raise SystemExit('receipt and reverify workflow IDs must be distinct')
           if producer.get('workflow_run_id') == producer.get('trigger_workflow_run_id'):
               raise SystemExit('receipt and reverify runs must be distinct')
           PY
 
-      - name: Freshly verify raw Git, receipt bytes, and provider attestation
+      - name: Apply exact altered-artifact control
+        if: >-
+          steps.trigger.outputs.stop_after_preflight != 'true' &&
+          steps.binding.outputs.stop_after_binding != 'true' &&
+          vars.EVOGUARD_RECEIPT_PILOT_NEGATIVE_RECEIPT_CONTROL == 'altered-artifact-v1'
+        env:
+          RECEIPT: ${{ runner.temp }}/receipt-inputs-safe/producer-receipt.json
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Establish a same-run positive baseline first. A provider outage or
+          # missing attestation therefore cannot be mistaken for mutation
+          # rejection.
+          gh attestation verify "$RECEIPT" \
+            --repo "$GITHUB_REPOSITORY" \
+            --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/evoguard-produce-release-source-receipt.yml" \
+            --signer-digest "$TARGET_SHA" --source-ref refs/heads/main --source-digest "$TARGET_SHA" \
+            --cert-oidc-issuer https://token.actions.githubusercontent.com \
+            --deny-self-hosted-runners --format json \
+            >"$RUNNER_TEMP/unaltered-provider-baseline.json"
+          test -s "$RUNNER_TEMP/unaltered-provider-baseline.json"
+          python - "$RECEIPT" "$RUNNER_TEMP/altered-artifact-hashes.json" <<'PY'
+          import hashlib, json, pathlib, sys
+
+          path = pathlib.Path(sys.argv[1])
+          before = path.read_bytes()
+          if not before.endswith(b'\n'):
+              raise SystemExit('canonical receipt does not end in LF')
+          after = before[:-1] + b' \n'
+          if after == before:
+              raise SystemExit('altered-artifact control did not change the exact bytes')
+          path.write_bytes(after)
+          record = {
+              'before_sha256': hashlib.sha256(before).hexdigest(),
+              'after_sha256': hashlib.sha256(after).hexdigest(),
+              'semantic_change': False,
+          }
+          with open(sys.argv[2], 'w', encoding='utf-8', newline='\n') as out:
+              json.dump(record, out, sort_keys=True, separators=(',', ':'))
+              out.write('\n')
+          PY
+
+      - id: provider
+        name: Freshly verify raw Git, receipt bytes, and provider attestation
+        if: >-
+          steps.trigger.outputs.stop_after_preflight != 'true' &&
+          steps.binding.outputs.stop_after_binding != 'true'
         env:
           INPUTS: ${{ runner.temp }}/receipt-inputs-safe
           TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -220,6 +357,9 @@ jobs:
           # Read-only job token for gh attestation verify. This fresh runner has
           # not checked out or executed candidate source.
           GH_TOKEN: ${{ github.token }}
+          NEGATIVE_CONTROL: ${{ vars.EVOGUARD_RECEIPT_PILOT_NEGATIVE_RECEIPT_CONTROL }}
+          PRODUCER_RUN_ID: ${{ github.event.workflow_run.id }}
+          PRODUCER_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
         run: |
           set -euo pipefail
           objects="$RUNNER_TEMP/objects.git"
@@ -246,6 +386,52 @@ jobs:
               json.dump(policy, out, sort_keys=True, separators=(',', ':'))
               out.write('\n')
           PY
+          if [[ "$NEGATIVE_CONTROL" == "altered-artifact-v1" ]]; then
+            set +e
+            gh attestation verify "$INPUTS/producer-receipt.json" \
+              --repo "$GITHUB_REPOSITORY" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/evoguard-produce-release-source-receipt.yml" \
+              --signer-digest "$TARGET_SHA" --source-ref refs/heads/main --source-digest "$TARGET_SHA" \
+              --cert-oidc-issuer https://token.actions.githubusercontent.com \
+              --deny-self-hosted-runners --format json \
+              >"$RUNNER_TEMP/negative-provider-stdout.json" \
+              2>"$RUNNER_TEMP/negative-provider-stderr.txt"
+            provider_status=$?
+            set -e
+            if [[ "$provider_status" -eq 0 ]]; then
+              echo "altered-artifact control unexpectedly verified" >&2
+              exit 1
+            fi
+            PROVIDER_STATUS="$provider_status" python - \
+              "$RUNNER_TEMP/altered-artifact-hashes.json" \
+              "$RUNNER_TEMP/negative-observation.json" <<'PY'
+          import json, os, sys
+
+          with open(sys.argv[1], encoding='utf-8') as handle:
+              hashes = json.load(handle)
+          payload = {
+              'schema_version': 'evoguard-receipt-negative-control-v1',
+              'control': 'altered-artifact-v1',
+              'result': 'EXPECTED_REJECTION',
+              'rejection_layer': 'github-artifact-attestation-subject-digest',
+              'reason': 'provider did not verify the altered receipt bytes',
+              'provider_exit_code': int(os.environ['PROVIDER_STATUS']),
+              'before_sha256': hashes['before_sha256'],
+              'after_sha256': hashes['after_sha256'],
+              'semantic_change': hashes['semantic_change'],
+              'producer_run_id': os.environ['PRODUCER_RUN_ID'],
+              'producer_run_attempt': int(os.environ['PRODUCER_RUN_ATTEMPT']),
+              'head_sha': os.environ['TARGET_SHA'],
+              'admitting': False,
+          }
+          with open(sys.argv[2], 'w', encoding='utf-8', newline='\n') as out:
+              json.dump(payload, out, sort_keys=True, separators=(',', ':'))
+              out.write('\n')
+          PY
+            echo "negative_control_passed=true" >> "$GITHUB_OUTPUT"
+            echo "EXPECTED_REJECTION: provider did not verify the altered receipt bytes"
+            exit 0
+          fi
           python -I "$RUNNER_TEMP/evo-guard.pyz" reverify-attested-release-source-producer-receipt \
             "$INPUTS/producer-receipt.json" "$INPUTS/handoff.json" "$INPUTS/verdict.json" \
             --source "$INPUTS/source.json" --context "$INPUTS/context.json" --producer "$INPUTS/producer.json" \
@@ -256,6 +442,10 @@ jobs:
             --allow-nonadmitting-evidence
 
       - name: Preserve fresh non-admitting verification data
+        if: >-
+          steps.trigger.outputs.stop_after_preflight != 'true' &&
+          steps.binding.outputs.stop_after_binding != 'true' &&
+          steps.provider.outputs.negative_control_passed != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: evoguard-release-source-preflight-v1-${{ github.run_attempt }}
@@ -267,7 +457,29 @@ jobs:
           overwrite: false
           retention-days: 1
 
+      - name: Preserve expected-rejection evidence
+        if: >-
+          always() &&
+          (steps.trigger.outputs.negative_control_passed == 'true' ||
+           steps.binding.outputs.negative_control_passed == 'true' ||
+           steps.provider.outputs.negative_control_passed == 'true')
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: evoguard-release-source-negative-control-v1-${{ vars.EVOGUARD_RECEIPT_PILOT_NEGATIVE_RECEIPT_CONTROL }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/negative-observation.json
+            ${{ runner.temp }}/unaltered-provider-baseline.json
+            ${{ runner.temp }}/negative-provider-stdout.json
+            ${{ runner.temp }}/negative-provider-stderr.txt
+          if-no-files-found: error
+          overwrite: false
+          retention-days: 1
+
       - name: State the deliberately non-admitting result
+        if: >-
+          steps.trigger.outputs.negative_control_passed != 'true' &&
+          steps.binding.outputs.negative_control_passed != 'true' &&
+          steps.provider.outputs.negative_control_passed != 'true'
         run: |
           echo "Authenticated producer receipt preflight passed."
           echo "No release-source ALLOW, signing key, deployment, release, or publication is enabled by this workflow."

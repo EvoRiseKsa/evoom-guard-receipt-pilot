@@ -200,3 +200,24 @@ Before any V2 or admission discussion, preserve public-safe evidence for:
 - [x] a failed-A rejection.
 
 No result from this repository is production approval or a release decision.
+
+## Dormant receipt-negative control
+
+C contains one bounded, read-only test hook selected only when
+`EVOGUARD_RECEIPT_PILOT_NEGATIVE_RECEIPT_CONTROL` has exactly one of these
+values while the ordinary chain activation variable is exactly `true`:
+
+- `altered-artifact-v1`: make a semantically equivalent one-byte change to a
+  snapshotted receipt and require GitHub Artifact Attestation verification to
+  reject the changed subject digest;
+- `wrong-workflow-v1`: substitute the separately pinned A workflow ID at C's
+  producer-workflow identity boundary and require rejection before download;
+- `wrong-run-attempt-v1`: substitute the next attempt number at C's producer
+  binding boundary and require rejection before provider verification.
+
+The selected path records only public-safe `EXPECTED_REJECTION` data and then
+stops. It has the same read-only permissions as ordinary C and adds no secret,
+Environment, OIDC, write permission, signing, release, deployment, or `ALLOW`
+operation. An unset value selects the ordinary non-admitting C path; any
+unrecognized value fails closed. The negative-control and chain-activation
+variables must both be deleted after the last terminal run.

@@ -69,6 +69,14 @@ to make a **fresh** GitHub Artifact Attestation verification of B's exact
 receipt bytes. It preserves only data-only verification evidence. C does not
 make an admission, release, deployment, merge, or publication decision.
 
+C also contains a dormant receipt-negative test hook. The administrator must
+select one exact value documented in [PILOT_STATUS.md](PILOT_STATUS.md); the
+three cases exercise altered bytes, a wrong producer workflow identity, and a
+wrong producer run attempt. A passing control means that the intended boundary
+returned `EXPECTED_REJECTION`, not that the receipt was admitted. The hook has
+no secret or write authority and its repository variable is absent outside a
+controlled round.
+
 CI downloads the published runtime, verifies its SHA-256, and checks that the
 policy's pack digest matches that runtime's canonical `pack-doctor` result.
 It does **not** run A, B, or C, produce a receipt, publish software, or make

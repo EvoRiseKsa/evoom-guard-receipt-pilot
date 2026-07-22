@@ -1,7 +1,6 @@
 """Static safety checks for the dormant receipt-producer workflow."""
 
 from pathlib import Path
-import re
 import unittest
 
 
