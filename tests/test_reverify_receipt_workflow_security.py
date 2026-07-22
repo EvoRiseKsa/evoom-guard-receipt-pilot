@@ -1,7 +1,6 @@
 """Static safety checks for the dormant receipt-pilot fresh verifier."""
 
 from pathlib import Path
-import re
 import unittest
 
 
@@ -57,7 +56,6 @@ class ReverifyReceiptWorkflowSecurityTests(unittest.TestCase):
             "actions/attest",
             "environment:",
             "secrets.",
-            "self-hosted",
             "sign-key",
             "git checkout",
             "git clone",
@@ -67,6 +65,7 @@ class ReverifyReceiptWorkflowSecurityTests(unittest.TestCase):
             "GITHUB_WORKSPACE",
         ):
             self.assertNotIn(forbidden, self.workflow)
+        self.assertNotRegex(self.workflow, r"runs-on:\s*(?:\[.*)?self-hosted")
 
     def test_pins_b_and_binds_all_upstream_administrative_anchors(self) -> None:
         for required in (
@@ -121,6 +120,30 @@ class ReverifyReceiptWorkflowSecurityTests(unittest.TestCase):
             self.workflow.index("Bind downloaded inputs to both protected workflow runs"),
             self.workflow.index("Freshly verify raw Git, receipt bytes, and provider attestation"),
         )
+
+    def test_inert_negative_controls_are_bounded_read_only_and_nonadmitting(self) -> None:
+        for required in (
+            "EVOGUARD_RECEIPT_PILOT_NEGATIVE_RECEIPT_CONTROL",
+            "altered-artifact-v1",
+            "wrong-workflow-v1",
+            "wrong-run-attempt-v1",
+            "unrecognized receipt negative-control value",
+            "EXPECTED_REJECTION",
+            "producer-workflow-identity-preflight",
+            "producer-run-attempt-binding",
+            "github-artifact-attestation-subject-digest",
+            "semantic_change': False",
+            "same-run positive baseline",
+            "unaltered-provider-baseline.json",
+            "provider_status",
+            "negative-observation.json",
+            "admitting': False",
+            "--deny-self-hosted-runners",
+            "evoguard-release-source-negative-control-v1-",
+        ):
+            self.assertIn(required, self.workflow)
+        self.assertEqual(self.workflow.count("EVOGUARD_RECEIPT_PILOT_NEGATIVE_RECEIPT_CONTROL"), 5)
+        self.assertNotIn("EVOGUARD_RECEIPT_PILOT_NEGATIVE_RECEIPT_CONTROL == 'true'", self.workflow)
 
     def test_uses_only_full_sha_pins(self) -> None:
         for required in (
