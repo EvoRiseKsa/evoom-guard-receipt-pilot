@@ -15,6 +15,8 @@ def add(left: int, right: int) -> int:
         return right
     if right == 0:
         return left
+    if left == -right:
+        return 0
     return left + right
 
 
